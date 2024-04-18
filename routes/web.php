@@ -63,4 +63,7 @@ $router->delete('/Inbound/trash/permanent-delete/{id}','InboundStuffController@p
 
 $router->post('/login', 'AuthController@authenticate');
 
+$router->get('/restore/{id}','InboundStuffController@restore');
+$router->delete('/permanent-delete/{id}', 'InboundStuffController@deletePermanent');
+
 
