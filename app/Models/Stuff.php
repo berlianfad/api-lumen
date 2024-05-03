@@ -23,6 +23,6 @@ class Stuff extends Model
 
     public function lendings()
     {
-        return $this->hasMany(Landing::class);
+        return $this->hasMany(Lending::class);
     }
 }

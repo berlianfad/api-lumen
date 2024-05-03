@@ -10,6 +10,11 @@ use App\Helpers\ApiFormatter;
 
 class UserController extends Controller
 {
+    public function __construct()
+{
+    $this->middleware('auth:api');
+}
+
     public function index()
     {
         $user = User::get();

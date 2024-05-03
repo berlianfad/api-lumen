@@ -13,9 +13,12 @@
 |
 */
 
+
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+$router->get('/lendings', 'LendingController@index');
+
 
 $router->get('/stuff', 'StuffController@index');
 $router->post('/stuff', 'StuffController@store');
@@ -66,4 +69,21 @@ $router->post('/login', 'AuthController@authenticate');
 $router->get('/restore/{id}','InboundStuffController@restore');
 $router->delete('/permanent-delete/{id}', 'InboundStuffController@deletePermanent');
 
+$router->post('/restorations/{lending_id}', 'RestorationController@store');
 
+$router->get('/', function () use ($router) {
+    return $router->app->version();
+});
+
+$router->post('login', 'AuthController@login');
+$router->get('logout', 'AuthController@logout');
+$router->get('profile', 'AuthController@me');
+
+$router->post('/lendings/store', 'LendingController@store');
+$router->delete('/lendings/delete/{id}', 'LendingController@destroy');
+
+$router->get('/lendings/{id}', 'LendingController@show');
+
+$router->delete('/inbound-stuff/delete/{id}', 'InboundStuffController@destroy');
+
+$router->delete('/stuff/delete/{id}', 'StuffController@destroy');

@@ -9,10 +9,24 @@ use Illuminate\Support\Facades\Validator;
 
 class StuffController extends Controller
 {
+    public function __construct()
+{
+    $this->middleware('auth:api');
+}
+
     public function index()
+    // {
+    //     $stuff = Stuff::with('stuffStock')->get();
+    //     return ApiFormatter::sendResponse(200, true, 'lihat semua barang', $stuff);
+    // }
     {
-        $stuff = Stuff::with('stock')->get();
-        return ApiFormatter::sendResponse(200, true, 'lihat semua barang', $stuff);
+        try {
+            $data = Stuff::with('stock')->get();
+
+            return ApiFormatter::sendResponse(200, 'success', $data);
+        } catch (\Exception $err) {
+            return ApiFormatter::sendResponse(400, 'bad request', $err->getMessage());
+        }
     }
 
     public function store(Request $request)
@@ -28,11 +42,11 @@ class StuffController extends Controller
             ]);
             return ApiFormatter::sendResponse(201, true, 'barang berhasil disimpan!', $stuff);
         } catch (\Throwable $th) {
-            if ($th->validator->errors()) {
-                return ApiFormatter::sendResponse(400, false, 'terdapat kesalahan input silahkan coba lagi', $th->validator->errors());
-            } else {
+            // if ($th->validator->errors() !== null) {
+            //     return ApiFormatter::sendResponse(400, false, 'terdapat kesalahan input silahkan coba lagi', $th->validator->errors());
+            // } else {
                 return ApiFormatter::sendResponse(400, false, 'terdapat kesalahan input silahkan coba lagi', $th->getMessage());
-            }
+            // }
         }
         // $validator = Validator::make($request->all(), [
         //     'name' => 'required',
@@ -135,24 +149,33 @@ class StuffController extends Controller
         }
 
         public function destroy($id)
-        {
-            try {
-                $stuff = Stuff::findOrFail($id);
+    {
+        try {
+            $stuff = Stuff::findOrFail($id);
 
+            if ($stuff->inboundStuff()->exists()) {
+                return ApiFormatter::sendResponse(400, "bad request", "Tidak dapat menghapus data stuff, sudah terdapat data inbound");
+            } 
+            elseif ($stuff->stock()->exists()) {
+                return ApiFormatter::sendResponse(400, "bad request", "Tidak dapat menghapus data stuff, sudah terdapat data stuff stock");
+            }
+            elseif($stuff->lendings()->exists()) {
+                return ApiFormatter::sendResponse(400, "bad request", "Tidak dapat menghapus data stuff, sudah terdapat data lending");
+            } 
+            elseif ($stuff->inboundStuff()->exists() && $stuff->stocks()->exists() && $stuff->lendings()->exists()) {
+                return ApiFormatter::sendResponse(400, "bad request", "Tidak dapat menghapus data stuff, sudah terdapat data inbound/stuff stock/lending");
+            }
+            else {
                 $stuff->delete();
 
                 return ApiFormatter::sendResponse(200, true, "berhasil hapus data barang dengan id $id", ['id' => $id]);
-                // return response()->json([
-                //     'success' => true,
-                //     'message' => "berhasil hapus data dengan id $id",
-                //     'data' => [
-                //         'id' => $id,
-                //     ]
-                //     ], 200);
-            } catch (\Throwable $th) {
-                return ApiFormatter::sendResponse(404, false, "proses gagal silahkan coba lagi", $th->getMessage());
             }
+
+        } catch (\Throwable $th) {
+
+            return ApiFormatter::sendResponse(404, false, "proses gagal silahkan coba lagi", $th->getMessage());
         }
+    }
 
         public function deleted()
         {

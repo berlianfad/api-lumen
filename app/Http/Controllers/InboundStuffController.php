@@ -13,6 +13,11 @@ use IntlChar;
 
 class InboundStuffController extends Controller
 {
+    public function __construct()
+{
+    $this->middleware('auth:api');
+}
+
     public function index()
     {
         $inboundStock = InboundStuff::with('stuff', 'stuff.stock')->get();
@@ -122,22 +127,24 @@ class InboundStuffController extends Controller
 
     public function destroy($id)
     {
+        // pada fitur hapus inbound stuff, tambahlah logic pengkondisian agar data inbound stuff 
+        // tidak dapat dihapus apabila total_available pada stuff_stocks lebih kecil dari total pada inbounds
         try {
             $inbound = InboundStuff::findOrFail($id);
-            $stock = StuffStock::where('stuff_id', $inbound->stuff_id)->first();
 
+            $data = StuffStock::where('stuff_id', $inbound->stuff_id)->first();
 
-            $available_min = $stock->total_available - $inbound->total;
-            $available = ($available_min < 0) ? 0 : $available_min;
-            $defect = ($available_min < 0) ? $stock->total_defect + ($available * -1) : $stock->total_defect;
-            $stock->update([
-                'total_available' => $available,
-                'total_defect' => $defect
-            ]);
-            $inbound->delete();
-            return ApiFormatter::sendResponse(200, true, "Berhasil Hapus Data dengan id $id", ['id' => $id]);
+            if ($data->total_available < $inbound->total) {
+                $inbound->delete();
+
+                return ApiFormatter::sendResponse(404, false, 'Proses gagal total_available pada stuff_stocks lebih kecil dari total pada inbounds');
+            } else {
+                return ApiFormatter::sendResponse(200, true, 'Berhasil hapus data dengan id $id', [ 'id' => $id,]);
+            }
+
         } catch (\Throwable $th) {
-            return ApiFormatter::sendResponse(400, false, "Proses gagal!", $th->getMessage());
+
+            return ApiFormatter::sendResponse(404, false, "Proses gagal silahkan coba lagi", $th->getMessage()); 
         }
     }
 
@@ -153,14 +160,6 @@ class InboundStuffController extends Controller
             return ApiFormatter::sendResponse(404, false, "Proses gagal! Silakan coba lagi!", $th->getMessage());
         }
     }
-
-            return ApiFormatter::sendResponse(200, true, "Berhasil mengembalikan semua data yang telah di hapus!");
-        } catch (\Throwable $th) {
-            //throw $th;
-            return ApiFormatter::sendResponse(404, false, "Proses gagal! Silakan coba lagi!", $th->getMessage());
-        }
-    }
-}
 
     public function restore( $id)
     {

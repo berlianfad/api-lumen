@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Stuff;
 use App\Models\StuffStock;
+use App\Helpers\ApiFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class StuffStockController extends Controller
 {
+    public function __construct()
+{
+    $this->middleware('auth:api');
+}
+
     public function index()
     {
         $stuffStock = StuffStock::all();
@@ -32,7 +38,7 @@ class StuffStockController extends Controller
         try {
             $this->validate($request, [
                 'stuff_id' => 'required',
-                'total_avaible' => 'required',
+                'total_available' => 'required',
                 'total_defec' => 'required',
             ]);
 
